@@ -1,8 +1,6 @@
-# AgriDot backend
+# <img width="150" alt="Agridot_logo" src="https://github.com/user-attachments/assets/c906eba6-8122-4f3b-83f5-8ecb04f326ef"> backend
 
-[AGRIDOT LOGO]
-
-## Description
+### Description
 
 Following Backend serves for counting the guide likes, creating guides, pest reports and for retrieving nearby pests.
 
