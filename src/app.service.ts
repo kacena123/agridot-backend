@@ -77,7 +77,7 @@ export class AppService {
       usedMetadata = originalMetadata;
     }
 
-    const wsProvider = new WsProvider('wss://asset-hub-paseo-rpc.dwellir.com');
+    const wsProvider = new WsProvider(this.configService.get('WSS_ENDPOINT'));
     const api = await ApiPromise.create({ provider: wsProvider });
 
     let nextItemId = 0;
