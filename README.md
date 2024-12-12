@@ -30,20 +30,20 @@ GATEWAY_URL=mypinata.cloud
 ## Project setup
 
 ```bash
-$ npm install
+pnpm install
 ```
 
 ## Compile and run the project
 
 ```bash
 # development
-$ npm run start
+pnpm start
 
 # watch mode
-$ npm run start:dev
+pnpm start:dev
 
 # production mode
-$ npm run start:prod
+pnpm start:prod
 ```
 
 ## Run dockerized version of BE
@@ -64,5 +64,5 @@ ngrok http 3000
 
 ```bash
 # unit tests
-$ npm run test
+$ pnpm test
 ```

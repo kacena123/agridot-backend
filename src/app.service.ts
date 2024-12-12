@@ -7,6 +7,13 @@ import { SubmittableExtrinsic } from '@polkadot/api/types';
 import { PestDto } from './dto/PESTDto';
 import { getClient } from '@kodadot1/uniquery';
 import { PinataService } from './helpers/pinata';
+import {
+  calculateDistance,
+  decryptMessage,
+  decryptPestArray,
+  encryptMessage,
+  encryptPests,
+} from './helpers/util';
 
 export enum UpdateStatus {
   Success = 'Success',
@@ -18,28 +25,6 @@ export enum UpdateStatus {
 export class AppService {
   constructor(private configService: ConfigService<AppConfig>) {}
 
-  calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
-    const R = 6371; // Radius of the Earth in kilometers
-    const toRadians = (degree: number) => degree * (Math.PI / 180);
-
-    console.log(lat1, lon1, lat2, lon2);
-
-    // Convert latitude and longitude from degrees to radians
-    const dLat = toRadians(lat2 - lat1);
-    const dLon = toRadians(lon2 - lon1);
-
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(toRadians(lat1)) *
-        Math.cos(toRadians(lat2)) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-    return R * c; // Distance in kilometers
-  }
-
   async mintNFT(nft: NftDto, collectionId: number): Promise<UpdateStatus> {
     const { owner, metadata } = nft;
 
@@ -49,18 +34,10 @@ export class AppService {
     const AgriDotWallet = this.configService.get('WALLET_MNEMONIC');
     const wallet = new Keyring({ type: 'sr25519' });
     const substrateSigner = wallet.addFromUri(AgriDotWallet);
-
-    const key = this.configService.get('DECRYPTION_PHRASE');
-    const agridotkey = this.configService.get('ENCRYPTION_PHRASE');
-
     let usedMetadata;
 
     //Decrypt the metadata
-    const CryptoJS = require('crypto-js');
-
-    const bytes = CryptoJS.AES.decrypt(metadata, key);
-    const originalMetadata = bytes.toString(CryptoJS.enc.Utf8);
-    console.log(collectionId, this.configService.get('PEST_COLLECTION'));
+    const originalMetadata = decryptMessage(metadata);
     if (collectionId == this.configService.get('PEST_COLLECTION')) {
       //Encrypt the metadata with agridot encryption phrase
       const meta = await fetch(
@@ -76,13 +53,8 @@ export class AppService {
       const name = origMeta.name;
       const type = origMeta.type;
 
-      const encryptedDesc = CryptoJS.AES.encrypt(
-        description,
-        agridotkey,
-      ).toString();
-      const encryptedImg = CryptoJS.AES.encrypt(img, agridotkey).toString();
-      const encryptedName = CryptoJS.AES.encrypt(name, agridotkey).toString();
-      const encryptedType = CryptoJS.AES.encrypt(type, agridotkey).toString();
+      const { encryptedName, encryptedDesc, encryptedImg, encryptedType } =
+        encryptMessage(name, description, img, type);
 
       const body = JSON.stringify({
         name: encryptedName,
@@ -99,7 +71,6 @@ export class AppService {
       );
 
       const encrypMeta = await pinataService.uploadJSON(body);
-      console.log('Uploaded to Pinata', meta);
 
       usedMetadata = 'ipfs://' + encrypMeta.ipfsHash;
     } else {
@@ -178,7 +149,7 @@ export class AppService {
     try {
       const result = await client.fetch<any>(query);
       console.log(result.data?.items);
-      let pestArray = [];
+      const pestArray = [];
       //Go through items, and save them into an array
       for (let i = 0; i < result.data?.items.length; i++) {
         const item = result.data?.items[i];
@@ -187,25 +158,26 @@ export class AppService {
       }
 
       //Decrypt the metadata in pestArray
-      const key = this.configService.get('ENCRYPTION_PHRASE');
-      const CryptoJS = require('crypto-js');
       for (let i = 0; i < pestArray.length; i++) {
         const pest = pestArray[i];
-        const bytesDesc = CryptoJS.AES.decrypt(pest.description, key);
-        const originalDesc = bytesDesc.toString(CryptoJS.enc.Utf8);
-        const bytesName = CryptoJS.AES.decrypt(pest.name, key);
-        const originalName = bytesName.toString(CryptoJS.enc.Utf8);
-        const bytesType = CryptoJS.AES.decrypt(pest.type, key);
-        const originalType = bytesType.toString(CryptoJS.enc.Utf8);
-        const bytesImage = CryptoJS.AES.decrypt(pest.image, key);
-        const originalImage = bytesImage.toString(CryptoJS.enc.Utf8);
+        const fetched = await fetch(
+          pest.replace(
+            'ipfs://',
+            'https://apricot-accurate-leech-751.mypinata.cloud/ipfs/',
+          ),
+        );
+        const fetchedPest = await fetched.json();
+
+        const { originalDesc, originalName, originalType, originalImage } =
+          decryptPestArray(fetchedPest);
+
         pestArray[i].description = originalDesc;
         pestArray[i].name = originalName;
         pestArray[i].type = originalType;
         pestArray[i].image = originalImage;
       }
       //Go through pestArray and compare the distance between the pests and the locations. Also create new array with pests that are within the threshold
-      let nearbyPests: { [key: string]: any[] } = {};
+      const nearbyPests: { [key: string]: any[] } = {};
 
       for (let i = 0; i < locations.length; i++) {
         const location = locations[i];
@@ -220,7 +192,7 @@ export class AppService {
           const pestSplit = pestLocation.split(' ');
           const lat2 = parseFloat(pestSplit[0]);
           const lon2 = parseFloat(pestSplit[1]);
-          const distance = this.calculateDistance(lat1, lon1, lat2, lon2);
+          const distance = calculateDistance(lat1, lon1, lat2, lon2);
           if (distance <= threshold) {
             //The structure of nearby pests should be following: {location1: [pest1, pest2, ...], location2: [pest1, pest2, ...], ...}
             //Remove Location from the description and only keep [Description] tag
@@ -239,30 +211,15 @@ export class AppService {
         }
       }
       //Encrypt nearbyPests
-      const agridotkey = this.configService.get('DECRYPTION_PHRASE');
       for (const location in nearbyPests) {
         for (let i = 0; i < nearbyPests[location].length; i++) {
           const pest = nearbyPests[location][i];
-          const bytesDesc = CryptoJS.AES.encrypt(
-            pest.description,
-            agridotkey,
-          ).toString();
-          const bytesName = CryptoJS.AES.encrypt(
-            pest.name,
-            agridotkey,
-          ).toString();
-          const bytesType = CryptoJS.AES.encrypt(
-            pest.type,
-            agridotkey,
-          ).toString();
-          const bytesImage = CryptoJS.AES.encrypt(
-            pest.image,
-            agridotkey,
-          ).toString();
-          pest.description = bytesDesc;
-          pest.name = bytesName;
-          pest.type = bytesType;
-          pest.image = bytesImage;
+          const { encryptedName, encryptedDesc, encryptedImg, encryptedType } =
+            encryptPests(pest);
+          pest.description = encryptedDesc;
+          pest.name = encryptedName;
+          pest.type = encryptedType;
+          pest.image = encryptedImg;
         }
       }
       return nearbyPests;
