@@ -154,12 +154,12 @@ export class AppService {
       for (let i = 0; i < result.data?.items.length; i++) {
         const item = result.data?.items[i];
         const itemMetadata = item.metadata;
-        pestArray.push(itemMetadata);
+        pestArray.push({ itemMetadata, createdAt: item.createdAt });
       }
       //Decrypt the metadata in pestArray
       let newPestArray = [];
       for (let i = 0; i < pestArray.length; i++) {
-        const pest = pestArray[i];
+        const pest = pestArray[i].itemMetadata;
         const fetched = await fetch(
           pest.replace(
             'ipfs://',
@@ -167,17 +167,16 @@ export class AppService {
           ),
         );
         const fetchedPest = await fetched.json();
-        const { originalDesc, originalName, originalType, originalImage } =
+        const { originalDesc, originalName, originalImage } =
           decryptPestArray(fetchedPest);
 
         newPestArray[i] = {
           description: originalDesc,
           name: originalName,
-          type: originalType,
+          date: pestArray[i].createdAt,
           image: originalImage,
         };
       }
-      console.log(newPestArray);
 
       let distanceArray = [];
 
@@ -205,19 +204,17 @@ export class AppService {
         pest.description = distanceArray.toString() + pest.description;
         distanceArray = [];
       }
-
       //Encrypt newPestArray
       for (let i = 0; i < newPestArray.length; i++) {
         const pest = newPestArray[i];
-        const { encryptedName, encryptedDesc, encryptedImg, encryptedType } =
+        const { encryptedName, encryptedDesc, encryptedImg, encryptedDate } =
           encryptPests(pest);
         pest.description = encryptedDesc;
         pest.name = encryptedName;
-        pest.type = encryptedType;
+        pest.date = encryptedDate;
         pest.image = encryptedImg;
       }
 
-      console.log(newPestArray);
       return newPestArray;
     } catch (error) {
       console.log(error);

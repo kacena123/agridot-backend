@@ -67,12 +67,10 @@ export function decryptPestArray(fetchedPest: any) {
   const originalDesc = bytesDesc.toString(CryptoJS.enc.Utf8);
   const bytesName = CryptoJS.AES.decrypt(fetchedPest.name, key);
   const originalName = bytesName.toString(CryptoJS.enc.Utf8);
-  const bytesType = CryptoJS.AES.decrypt(fetchedPest.type, key);
-  const originalType = bytesType.toString(CryptoJS.enc.Utf8);
   const bytesImage = CryptoJS.AES.decrypt(fetchedPest.image, key);
   const originalImage = bytesImage.toString(CryptoJS.enc.Utf8);
 
-  return { originalDesc, originalName, originalType, originalImage };
+  return { originalDesc, originalName, originalImage };
 }
 
 export function encryptPests(pest: any) {
@@ -85,13 +83,13 @@ export function encryptPests(pest: any) {
     agridotkey,
   ).toString();
   const bytesName = CryptoJS.AES.encrypt(pest.name, agridotkey).toString();
-  const bytesType = CryptoJS.AES.encrypt(pest.type, agridotkey).toString();
+  const bytesDate = CryptoJS.AES.encrypt(pest.date, agridotkey).toString();
   const bytesImage = CryptoJS.AES.encrypt(pest.image, agridotkey).toString();
 
   return {
     encryptedName: bytesName,
     encryptedDesc: bytesDesc,
     encryptedImg: bytesImage,
-    encryptedType: bytesType,
+    encryptedDate: bytesDate,
   };
 }
