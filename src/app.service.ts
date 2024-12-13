@@ -140,7 +140,7 @@ export class AppService {
   }
 
   async getNearbyPests(pests: PestDto): Promise<any> {
-    const { locations, threshold } = pests;
+    const { locations } = pests;
 
     const client = getClient('ahk' as any);
     const query = client.itemListByCollectionId(
@@ -175,19 +175,19 @@ export class AppService {
           name: originalName,
           type: originalType,
           image: originalImage,
-        }
+        };
       }
-      //Go through pestArray and compare the distance between the pests and the locations. Also create new array with pests that are within the threshold
-      const nearbyPests: { [key: string]: any[] } = {};
-      for (let i = 0; i < locations.length; i++) {
-        const location = locations[i];
-        for (let j = 0; j < newPestArray.length; j++) {
-          const pest = newPestArray[j];
-          let newPest = { ...pest };
+      console.log(newPestArray);
+
+      let distanceArray = [];
+
+      for (let i = 0; i < newPestArray.length; i++) {
+        const pest = newPestArray[i];
+        for (let j = 0; j < locations.length; j++) {
+          const location = locations[j];
           const pestLocation = pest.description
             .match(/\[Location\](.*?)\[Description\]/)?.[1]
             ?.trim();
-
           const locationSplit = location.split(' ');
           const lat1 = parseFloat(locationSplit[0]);
           const lon1 = parseFloat(locationSplit[1]);
@@ -195,37 +195,30 @@ export class AppService {
           const lat2 = parseFloat(pestSplit[0]);
           const lon2 = parseFloat(pestSplit[1]);
           const distance = calculateDistance(lat1, lon1, lat2, lon2);
-          if (distance <= threshold) {
-            //The structure of nearby pests should be following: {location1: [pest1, pest2, ...], location2: [pest1, pest2, ...], ...}
-            //Remove Location from the description and only keep [Description] tag
-            newPest.description = newPest.description.replace(
-              /\[Location\](.*?)\[Description\]/,
-              '[Description]',
-            );
+          distanceArray.push(distance);
+        }
+        pest.description = pest.description.replace(
+          /\[Location\](.*?)\[Description\]/,
+          '[Description]',
+        );
 
-            newPest.description = distance.toString() + newPest.description;
-            if (location in nearbyPests) {
-              nearbyPests[location].push(newPest);
-            } else {
-              nearbyPests[location] = [newPest];
-            }
-          }
-        }
+        pest.description = distanceArray.toString() + pest.description;
+        distanceArray = [];
       }
-      //Encrypt nearbyPests
-      for (const location in nearbyPests) {
-        for (let i = 0; i < nearbyPests[location].length; i++) {
-          const pest = nearbyPests[location][i];
-          const { encryptedName, encryptedDesc, encryptedImg, encryptedType } =
-            encryptPests(pest);
-          pest.description = encryptedDesc;
-          pest.name = encryptedName;
-          pest.type = encryptedType;
-          pest.image = encryptedImg;
-        }
+
+      //Encrypt newPestArray
+      for (let i = 0; i < newPestArray.length; i++) {
+        const pest = newPestArray[i];
+        const { encryptedName, encryptedDesc, encryptedImg, encryptedType } =
+          encryptPests(pest);
+        pest.description = encryptedDesc;
+        pest.name = encryptedName;
+        pest.type = encryptedType;
+        pest.image = encryptedImg;
       }
-      console.log(nearbyPests);
-      return nearbyPests;
+
+      console.log(newPestArray);
+      return newPestArray;
     } catch (error) {
       console.log(error);
       return null;
