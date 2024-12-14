@@ -15,7 +15,6 @@ export class AppController {
   @Post('guide')
   async getGuide(@Body() nft: NftDto): Promise<{ status: UpdateStatus }> {
     const collection = this.configService.get('GUIDE_COLLECTION');
-    console.log(collection);
     const status = await this.appService.mintNFT(nft, collection);
     return { status };
   }

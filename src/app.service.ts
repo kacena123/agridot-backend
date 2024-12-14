@@ -14,6 +14,7 @@ import {
   encryptMessage,
   encryptPests,
 } from './helpers/util';
+import { enc } from 'crypto-js';
 
 export enum UpdateStatus {
   Success = 'Success',
@@ -154,8 +155,14 @@ export class AppService {
       for (let i = 0; i < result.data?.items.length; i++) {
         const item = result.data?.items[i];
         const itemMetadata = item.metadata;
-        pestArray.push({ itemMetadata, createdAt: item.createdAt });
+        pestArray.push({
+          itemMetadata,
+          createdAt: item.createdAt,
+          id: item.id,
+          owner: item.currentOwner,
+        });
       }
+
       //Decrypt the metadata in pestArray
       let newPestArray = [];
       for (let i = 0; i < pestArray.length; i++) {
@@ -174,6 +181,8 @@ export class AppService {
           description: originalDesc,
           name: originalName,
           date: pestArray[i].createdAt,
+          id: pestArray[i].id,
+          owner: pestArray[i].owner,
           image: originalImage,
         };
       }
@@ -204,17 +213,20 @@ export class AppService {
         pest.description = distanceArray.toString() + pest.description;
         distanceArray = [];
       }
+
       //Encrypt newPestArray
       for (let i = 0; i < newPestArray.length; i++) {
         const pest = newPestArray[i];
-        const { encryptedName, encryptedDesc, encryptedImg, encryptedDate } =
+        const { encryptedName, encryptedDesc, encryptedImg, encryptedDate, encryptedId, encryptedOwner } =
           encryptPests(pest);
         pest.description = encryptedDesc;
         pest.name = encryptedName;
         pest.date = encryptedDate;
         pest.image = encryptedImg;
+        pest.id = encryptedId;
+        pest.owner = encryptedOwner;
       }
-
+      
       return newPestArray;
     } catch (error) {
       console.log(error);

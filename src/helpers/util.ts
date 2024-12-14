@@ -9,7 +9,6 @@ export function calculateDistance(
 ): number {
   const R = 6371; // Radius of the Earth in kilometers
   const toRadians = (degree: number) => degree * (Math.PI / 180);
-  console.log(lat1, lon1, lat2, lon2);
   // Convert latitude and longitude from degrees to radians
   const dLat = toRadians(lat2 - lat1);
   const dLon = toRadians(lon2 - lon1);
@@ -84,6 +83,8 @@ export function encryptPests(pest: any) {
   ).toString();
   const bytesName = CryptoJS.AES.encrypt(pest.name, agridotkey).toString();
   const bytesDate = CryptoJS.AES.encrypt(pest.date, agridotkey).toString();
+  const bytesId = CryptoJS.AES.encrypt(pest.id, agridotkey).toString();
+  const bytesOwner = CryptoJS.AES.encrypt(pest.owner, agridotkey).toString();
   const bytesImage = CryptoJS.AES.encrypt(pest.image, agridotkey).toString();
 
   return {
@@ -91,5 +92,7 @@ export function encryptPests(pest: any) {
     encryptedDesc: bytesDesc,
     encryptedImg: bytesImage,
     encryptedDate: bytesDate,
+    encryptedId: bytesId,
+    encryptedOwner: bytesOwner,
   };
 }
