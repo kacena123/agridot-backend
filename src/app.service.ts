@@ -44,7 +44,7 @@ export class AppService {
       const meta = await fetch(
         originalMetadata.replace(
           'ipfs://',
-          'https://apricot-accurate-leech-751.mypinata.cloud/ipfs/',
+          'https://'+ this.configService.get('IPFS_GATEWAY_URL') + '/ipfs/',
         ),
       );
       const origMeta = await meta.json();
@@ -68,7 +68,7 @@ export class AppService {
       });
       const pinataService = new PinataService(
         this.configService.get('PINATA_JWT'),
-        this.configService.get('GATEWAY_URL'),
+        this.configService.get('PINATA_GATEWAY_URL'),
       );
 
       const encrypMeta = await pinataService.uploadJSON(body);
@@ -165,15 +165,18 @@ export class AppService {
 
       //Decrypt the metadata in pestArray
       let newPestArray = [];
+      
       for (let i = 0; i < pestArray.length; i++) {
         const pest = pestArray[i].itemMetadata;
         const fetched = await fetch(
           pest.replace(
             'ipfs://',
-            'https://apricot-accurate-leech-751.mypinata.cloud/ipfs/',
+            'https://'+ this.configService.get('IPFS_GATEWAY_URL') + '/ipfs/',
           ),
         );
+        console.log(fetched);
         const fetchedPest = await fetched.json();
+        console.log(fetchedPest);
         const { originalDesc, originalName, originalImage } =
           decryptPestArray(fetchedPest);
 

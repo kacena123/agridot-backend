@@ -7,5 +7,6 @@ export interface AppConfig {
   ENCRYPTION_PHRASE: string;
   DECRYPTION_PHRASE: string;
   PINATA_JWT: string;
-  GATEWAY_URL: string;
+  PINATA_GATEWAY_URL: string;
+  IPFS_GATEWAY_URL: string;
 }

@@ -24,7 +24,9 @@ PORT: string;
 # Pinata JWT token for pest and guide data uploads
 PINATA_JWT=string
 # Pinata gateway url for pest and guide data uploads
-GATEWAY_URL=mypinata.cloud
+PINATA_GATEWAY_URL=mypinata.cloud
+# IPFS gateway url for data fetching
+IPFS_GATEWAY_URL
 ```
 
 ## Project setup
