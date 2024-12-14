@@ -174,9 +174,7 @@ export class AppService {
             'https://'+ this.configService.get('IPFS_GATEWAY_URL') + '/ipfs/',
           ),
         );
-        console.log(fetched);
         const fetchedPest = await fetched.json();
-        console.log(fetchedPest);
         const { originalDesc, originalName, originalImage } =
           decryptPestArray(fetchedPest);
 
