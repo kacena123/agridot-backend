@@ -75,7 +75,7 @@ describe('AppController', () => {
 
   describe('getNearbyPest', () => {
     it('should call getNearbyPests with the correct arguments and return the result', async () => {
-      const pest: PestDto = { locations: ['0 0'], threshold: 0 };
+      const pest: PestDto = { locations: ['0 0'] };
       const mockNearbyPests = {};
 
       jest

@@ -84,7 +84,6 @@ describe('decryptPestArray', () => {
 
     expect(decrypted.originalDesc).toBe('desc');
     expect(decrypted.originalName).toBe('name');
-    expect(decrypted.originalType).toBe('type');
     expect(decrypted.originalImage).toBe('image');
   });
 });
@@ -107,7 +106,6 @@ describe('encryptPests', () => {
 
     expect(encrypted.encryptedDesc).not.toBe('desc');
     expect(encrypted.encryptedName).not.toBe('name');
-    expect(encrypted.encryptedType).not.toBe('type');
     expect(encrypted.encryptedImg).not.toBe('image');
   });
 });
