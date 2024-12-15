@@ -1,3 +1,4 @@
+// Code inspired from: https://github.com/PinataCloud/pinata-expo-template
 import axios from 'axios';
 
 const PINATA_API_URL = 'https://api.pinata.cloud';
